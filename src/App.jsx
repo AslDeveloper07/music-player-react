@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Plus } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  Plus,
+  Sun,
+  Moon,
+} from "lucide-react";
 
 export default function MusicPlayer() {
   const [songs, setSongs] = useState([]);
@@ -8,10 +17,29 @@ export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains("dark")
+  );
   const audioRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const currentSong = songs[currentSongIndex] || {};
+
+  useEffect(() => {
+    const media =
+      window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+    const syncFromDom = () =>
+      setIsDark(document.documentElement.classList.contains("dark"));
+    media?.addEventListener?.("change", syncFromDom);
+    return () => media?.removeEventListener?.("change", syncFromDom);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+    setIsDark(next);
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -57,7 +85,8 @@ export default function MusicPlayer() {
       title: file.name.replace(/\.[^/.]+$/, ""),
       artist: "Local File",
       src: URL.createObjectURL(file),
-      cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
+      cover:
+        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
     }));
     setSongs((prev) => [...prev, ...newSongs]);
     if (songs.length === 0) {
@@ -74,29 +103,35 @@ export default function MusicPlayer() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-white text-gray-900 dark:from-gray-900 dark:to-black dark:text-white overflow-hidden">
       {/* Background Image with Blur */}
       {currentSong.cover && (
         <div
           className="fixed inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${currentSong.cover})` }}
         >
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-3xl"></div>
+          <div className="absolute inset-0 bg-white/60 dark:bg-black/70 backdrop-blur-3xl"></div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-1 overflow-hidden">
-        {/* Playlist Sidebar */}
-        <div className="w-64 bg-black/40 backdrop-blur-xl p-4 flex flex-col border-r border-gray-800">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Playlist</h2>
+      {/* Navbar */}
+      <div className="relative z-10">
+        <nav className="h-14 px-4 flex items-center justify-between border-b border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-black/40 backdrop-blur-xl">
+          <h1 className="text-lg font-semibold">Music Player</h1>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white"
             >
               <Plus size={18} />
-              <span>Add Music</span>
+              <span className="hidden sm:inline">Add Music</span>
+            </button>
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="p-2 rounded-md border border-gray-200/60 dark:border-gray-800/60 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <input
               ref={fileInputRef}
@@ -107,10 +142,20 @@ export default function MusicPlayer() {
               onChange={handleFileUpload}
             />
           </div>
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-1 overflow-hidden">
+        {/* Playlist Sidebar */}
+        <div className="w-64 bg-white/40 dark:bg-black/40 backdrop-blur-xl p-4 flex flex-col border-r border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">Playlist</h2>
+          </div>
 
           {songs.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-center p-4">
-              <p>No music added yet. Click the "Add Music" button to get started.</p>
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-center p-4">
+              <p>No music added yet. Use the Add Music button above.</p>
             </div>
           ) : (
             <ul className="flex-1 overflow-y-auto space-y-2 pr-2">
@@ -124,7 +169,7 @@ export default function MusicPlayer() {
                   className={`p-3 rounded-lg cursor-pointer transition-all flex items-center ${
                     idx === currentSongIndex
                       ? "bg-blue-600/30 backdrop-blur border border-blue-500/50"
-                      : "hover:bg-white/10"
+                      : "hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   <div className="w-10 h-10 bg-blue-700/30 rounded-md flex items-center justify-center mr-3">
@@ -139,10 +184,18 @@ export default function MusicPlayer() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium truncate ${idx === currentSongIndex ? "text-blue-300" : ""}`}>
+                    <p
+                      className={`font-medium truncate ${
+                        idx === currentSongIndex
+                          ? "text-blue-600 dark:text-blue-300"
+                          : ""
+                      }`}
+                    >
                       {song.title}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">{song.artist}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {song.artist}
+                    </p>
                   </div>
                 </motion.li>
               ))}
@@ -161,8 +214,8 @@ export default function MusicPlayer() {
                   rotate: {
                     repeat: isPlaying ? Infinity : 0,
                     duration: 10,
-                    ease: "linear"
-                  }
+                    ease: "linear",
+                  },
                 }}
                 className="w-64 h-64 rounded-full overflow-hidden shadow-2xl"
               >
@@ -173,8 +226,10 @@ export default function MusicPlayer() {
                 />
               </motion.div>
             ) : (
-              <div className="w-64 h-64 rounded-full bg-gray-800/50 flex items-center justify-center shadow-2xl border-2 border-gray-700/50">
-                <div className="text-5xl text-gray-600">♪</div>
+              <div className="w-64 h-64 rounded-full bg-gray-200 dark:bg-gray-800/50 flex items-center justify-center shadow-2xl border-2 border-gray-300 dark:border-gray-700/50">
+                <div className="text-5xl text-gray-500 dark:text-gray-600">
+                  ♪
+                </div>
               </div>
             )}
 
@@ -202,19 +257,24 @@ export default function MusicPlayer() {
               key={currentSong.artist || "empty"}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-gray-400 text-lg"
+              className="text-gray-600 dark:text-gray-400 text-lg"
             >
               {currentSong.artist || "Add music to begin"}
             </motion.p>
           </div>
+        </div>
+      </div>
 
+      {/* Footer Player Controls */}
+      <footer className="relative z-10 border-t border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/40 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           {/* Progress Bar */}
-          <div className="w-full max-w-xl mb-8">
-            <div className="flex justify-between text-sm text-gray-400 mb-2">
+          <div className="w-full mb-4">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(audioRef.current?.duration || 0)}</span>
             </div>
-            <div className="relative h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <input
                 type="range"
                 min="0"
@@ -223,67 +283,72 @@ export default function MusicPlayer() {
                 onChange={handleSeek}
                 className="absolute w-full h-full opacity-0 cursor-pointer z-20"
               />
-              <div className="absolute w-full h-full bg-gray-700 rounded-full"></div>
+              <div className="absolute w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full"></div>
               <motion.div
                 className="absolute h-full bg-blue-600 rounded-full"
                 animate={{
-                  width: `${(currentTime / (audioRef.current?.duration || 1)) * 100}%`,
+                  width: `${
+                    (currentTime / (audioRef.current?.duration || 1)) * 100
+                  }%`,
                 }}
                 transition={{ duration: 0.2 }}
               />
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center space-x-6 mb-8">
-            <button
-              onClick={handlePrev}
-              disabled={songs.length === 0}
-              className="p-3 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <SkipBack size={28} />
-            </button>
+          {/* Controls Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+            <div className="hidden sm:block" />
 
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={togglePlayPause}
-              disabled={songs.length === 0}
-              className="p-4 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {isPlaying ? <Pause size={28} /> : <Play size={28} />}
-            </motion.button>
+            <div className="flex items-center justify-center space-x-6">
+              <button
+                onClick={handlePrev}
+                disabled={songs.length === 0}
+                className="p-3 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <SkipBack size={24} />
+              </button>
 
-            <button
-              onClick={handleNext}
-              disabled={songs.length === 0}
-              className="p-3 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <SkipForward size={28} />
-            </button>
-          </div>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={togglePlayPause}
+                disabled={songs.length === 0}
+                className="p-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg disabled:opacity-30 disabled:cursor-not-allowed text-white"
+              >
+                {isPlaying ? <Pause size={26} /> : <Play size={26} />}
+              </motion.button>
 
-          {/* Volume Control */}
-          <div className="flex items-center space-x-3 w-full max-w-xs">
-            <Volume2 size={20} className="text-gray-400" />
-            <div className="relative flex-1 h-2 bg-gray-700 rounded-full">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="absolute w-full h-full opacity-0 cursor-pointer z-20"
-              />
-              <div className="absolute w-full h-full bg-gray-700 rounded-full"></div>
-              <motion.div
-                className="absolute h-full bg-white rounded-full"
-                animate={{ width: `${volume * 100}%` }}
-              />
+              <button
+                onClick={handleNext}
+                disabled={songs.length === 0}
+                className="p-3 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <SkipForward size={24} />
+              </button>
+            </div>
+
+            <div className="flex items-center sm:justify-end gap-3 w-full">
+              <Volume2 size={18} className="text-gray-600 dark:text-gray-400" />
+              <div className="relative flex-1 sm:w-72 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="absolute w-full h-full opacity-0 cursor-pointer z-20"
+                />
+                <div className="absolute w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <motion.div
+                  className="absolute h-full bg-gray-900 dark:bg-white rounded-full"
+                  animate={{ width: `${volume * 100}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </footer>
 
       <audio ref={audioRef} src={currentSong.src} onEnded={handleNext} />
     </div>
