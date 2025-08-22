@@ -29,9 +29,9 @@ export default function MusicPlayer() {
   const [volume, setVolume] = useState(0.8);
   const [darkMode, setDarkMode] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [showPlaylist, setShowPlaylist] = useState(true);
+  const [showPlaylist, setShowPlaylist] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: all, 2: one
+  const [repeatMode, setRepeatMode] = useState(0);
   const [isShuffled, setIsShuffled] = useState(false);
   const [activeTab, setActiveTab] = useState("tracks");
   const audioRef = useRef(null);
@@ -53,7 +53,6 @@ export default function MusicPlayer() {
     return () => audio.removeEventListener("timeupdate", updateTime);
   }, [currentSongIndex, isPlaying, volume]);
 
-  // Close volume slider when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -82,7 +81,6 @@ export default function MusicPlayer() {
     if (songs.length === 0) return;
 
     if (repeatMode === 2) {
-      // Repeat one song
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -164,7 +162,6 @@ export default function MusicPlayer() {
 
   const handleEnded = () => {
     if (repeatMode === 2) {
-      // Repeat one song
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -173,38 +170,6 @@ export default function MusicPlayer() {
       handleNext();
     }
   };
-
-  // Add some demo songs if empty
-  useEffect(() => {
-    if (songs.length === 0) {
-      setSongs([
-        {
-          id: 1,
-          title: "Midnight Vibes",
-          artist: "Luna Sound",
-          cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=800&q=80",
-          src: "",
-          duration: "3:45",
-        },
-        {
-          id: 2,
-          title: "Electric Dreams",
-          artist: "Neon Wave",
-          cover: "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?auto=format&fit=crop&w=800&q=80",
-          src: "",
-          duration: "4:20",
-        },
-        {
-          id: 3,
-          title: "Ocean Breeze",
-          artist: "Coastal Echo",
-          cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
-          src: "",
-          duration: "2:55",
-        },
-      ]);
-    }
-  }, []);
 
   return (
     <div
@@ -236,30 +201,6 @@ export default function MusicPlayer() {
           }}
           transition={{
             duration: 20,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-        />
-
-        {/* Additional background elements for depth */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-40 h-40 bg-cyan-500/5 rounded-full blur-2xl"
-          animate={{
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            repeatType: "reverse",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/3 right-1/3 w-32 h-32 bg-pink-500/5 rounded-full blur-2xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-          }}
-          transition={{
-            duration: 8,
             repeat: Infinity,
             repeatType: "reverse",
           }}
@@ -554,7 +495,24 @@ export default function MusicPlayer() {
           </motion.div>
 
           {/* Song Info */}
-
+          <div className="text-center mb-8">
+            <motion.h2
+              className="text-3xl font-bold mb-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {currentSong.title || "No song selected"}
+            </motion.h2>
+            <motion.p
+              className="text-lg text-gray-400"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {currentSong.artist || "Unknown Artist"}
+            </motion.p>
+          </div>
         </div>
       </div>
 
@@ -570,7 +528,7 @@ export default function MusicPlayer() {
         } shadow-lg z-10`}
       >
         {/* Progress Bar */}
-        <div className=" mb-5">
+        <div className="mb-5">
           <div className="flex justify-between text-xs text-gray-400 mb-2">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(audioRef.current?.duration || 0)}</span>
@@ -608,7 +566,7 @@ export default function MusicPlayer() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between ">
+        <div className="flex items-center justify-between">
           {/* Left side: Song info and volume */}
           <div className="flex items-center gap-4">
             {/* Mini album art */}
@@ -643,8 +601,8 @@ export default function MusicPlayer() {
                 isShuffled
                   ? "text-blue-400 bg-blue-400/10"
                   : darkMode
-                    ? "text-gray-400 hover:text-white hover:bg-white/10"
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-400/10"
+                  ? "text-gray-400 hover:text-white hover:bg-white/10"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-400/10"
               } transition-all`}
             >
               <Shuffle size={18} />
@@ -671,7 +629,11 @@ export default function MusicPlayer() {
               disabled={songs.length === 0}
               className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-full shadow-md disabled:opacity-30 transition-all transform hover:shadow-lg"
             >
-              {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
+              {isPlaying ? (
+                <Pause size={24} />
+              ) : (
+                <Play size={24} className="ml-0.5" />
+              )}
             </motion.button>
 
             <motion.button
@@ -745,9 +707,7 @@ export default function MusicPlayer() {
                         max="1"
                         step="0.01"
                         value={volume}
-                        onChange={(e) =>
-                          setVolume(parseFloat(e.target.value))
-                        }
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
                         className="w-20 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
                       />
                     </motion.div>
