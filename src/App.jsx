@@ -729,7 +729,6 @@ export default function MusicPlayer() {
               />
             </div>
 
-            {/* Show playlist button for mobile */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
